@@ -1,0 +1,94 @@
+.sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  transition: width 0.3s;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+  width: 100px;
+}
+
+.sidebar-header {
+  padding: 0 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.toggle-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+}
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: white;
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-left-color: white;
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+  min-width: 1.5rem;
+}
+
+.sidebar.collapsed .nav-text {
+  display: none;
+}
+
+.sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-info {
+  margin-bottom: 1rem;
+}
+
+.user-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
