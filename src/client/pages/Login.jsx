@@ -27,7 +27,7 @@ function Login({ setIsAuthenticated, setUser }) {
       setIsAuthenticated(true)
       setUser(response.data.user)
     } catch (err) {
-      setError(err.response?.data?.error || 'An error occurred')
+      setError(err.response?.data?.error || '发生错误，请稍后重试')
     } finally {
       setLoading(false)
     }
@@ -37,15 +37,15 @@ function Login({ setIsAuthenticated, setUser }) {
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <h1>🚀 Harness Platform</h1>
-          <p>AI-Powered Engineering Platform</p>
+          <h1>🚀 Harness 工程平台</h1>
+          <p>面向 SPEC / 工作流 / 评测 / 资产市场的一体化工程控制台</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="username" className="form-label">Username</label>
+            <label htmlFor="username" className="form-label">用户名</label>
             <input
               id="username"
               type="text"
@@ -58,7 +58,7 @@ function Login({ setIsAuthenticated, setUser }) {
 
           {isRegister && (
             <div className="form-group">
-              <label htmlFor="email" className="form-label">Email</label>
+              <label htmlFor="email" className="form-label">邮箱</label>
               <input
                 id="email"
                 type="email"
@@ -71,7 +71,7 @@ function Login({ setIsAuthenticated, setUser }) {
           )}
 
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
+            <label htmlFor="password" className="form-label">密码</label>
             <input
               id="password"
               type="password"
@@ -83,19 +83,19 @@ function Login({ setIsAuthenticated, setUser }) {
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Loading...' : isRegister ? 'Register' : 'Login'}
+            {loading ? '处理中...' : isRegister ? '注册' : '登录'}
           </button>
         </form>
 
         <div className="login-footer">
           <p>
-            {isRegister ? 'Already have an account?' : "Don't have an account?"}
+            {isRegister ? '已经有账号了？' : '还没有账号？'}
             <button
               type="button"
               className="toggle-auth-btn"
               onClick={() => setIsRegister(!isRegister)}
             >
-              {isRegister ? 'Login' : 'Register'}
+              {isRegister ? '去登录' : '去注册'}
             </button>
           </p>
         </div>
