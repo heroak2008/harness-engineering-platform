@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Testing.css'
+import { authHeaders } from '../utils/auth'
 
 const TYPE_LABELS = {
   unit: '单元测试',
@@ -24,10 +25,6 @@ function Testing() {
   const [executingId, setExecutingId] = useState(null)
   const [executionResults, setExecutionResults] = useState({})
 
-  const authHeaders = () => {
-    const token = localStorage.getItem('token')
-    return token ? { Authorization: 'Bearer ' + token } : {}
-  }
 
   useEffect(() => {
     fetchTestCases()

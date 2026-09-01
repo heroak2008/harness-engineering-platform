@@ -55,7 +55,7 @@ harness-engineering-platform/
 
 ## 鉴权范围与安全说明（重要）
 
-- `routes/auth.js` 提供 `POST /api/auth/register`、`POST /api/auth/login`、`GET /api/auth/me`（受 `verifyToken` 中间件保护），使用 JWT 签发与校验 token。
+- `routes/auth.js` 提供 `POST /api/auth/register`、`POST /api/auth/login`、`GET /api/auth/me`（受 `verifyToken` 中间件保护），使用 JWT 签发与校验 token；三个接口均挂载了基础的速率限制（`express-rate-limit`，默认 15 分钟内最多 20 次请求）以缓解暴力破解/撞库风险。
 - **`workflow` / `asset` / `spec` / `testing` / `dashboard` 五个资源路由目前均未挂载 `verifyToken` 中间件**，也就是说：
   - 前端会在请求头带上登录后获得的 token，但后端当前并未校验该 token 是否有效才允许访问这些资源接口。
   - 任何能访问到后端服务的客户端都可以直接读写工作流、资产、SPEC、测试集数据，无需登录。

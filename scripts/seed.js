@@ -25,7 +25,7 @@ async function seed() {
   console.log(`Connecting to ${MONGODB_URI} ...`);
   await mongoose.connect(MONGODB_URI);
 
-  console.log('Clearing existing sample collections...');
+  console.log('Deleting ALL existing documents from Workflow/Asset/Spec/TestingCase collections (not just prior seed data)...');
   await Promise.all([
     Workflow.deleteMany({}),
     Asset.deleteMany({}),

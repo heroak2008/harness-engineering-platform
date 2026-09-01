@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import './Dashboard.css'
+import { authHeaders } from '../utils/auth'
 
 function Dashboard() {
   const [stats, setStats] = useState(null)
@@ -20,8 +21,7 @@ function Dashboard() {
     setLoading(true)
     setError('')
     try {
-      const token = localStorage.getItem('token')
-      const headers = token ? { Authorization: 'Bearer ' + token } : {}
+      const headers = authHeaders()
 
       const [statsRes, activitiesRes] = await Promise.all([
         axios.get('/api/dashboard/stats', { headers }),

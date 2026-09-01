@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Specs.css'
+import { authHeaders } from '../utils/auth'
 
 const SPEC_TYPE_LABELS = {
   requirement: '需求',
@@ -26,10 +27,6 @@ function Specs() {
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({ title: '', description: '', specType: 'requirement' })
 
-  const authHeaders = () => {
-    const token = localStorage.getItem('token')
-    return token ? { Authorization: 'Bearer ' + token } : {}
-  }
 
   useEffect(() => {
     fetchSpecs()

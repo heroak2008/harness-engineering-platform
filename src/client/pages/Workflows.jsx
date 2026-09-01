@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Workflows.css'
+import { authHeaders } from '../utils/auth'
 
 const STAGE_LABELS = {
   command: 'Command 入口',
@@ -20,10 +21,6 @@ function Workflows() {
   const [executingId, setExecutingId] = useState(null)
   const [executionResults, setExecutionResults] = useState({})
 
-  const authHeaders = () => {
-    const token = localStorage.getItem('token')
-    return token ? { Authorization: 'Bearer ' + token } : {}
-  }
 
   useEffect(() => {
     fetchWorkflows()

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Assets.css'
+import { authHeaders } from '../utils/auth'
 
 const TYPE_LABELS = {
   all: '全部',
@@ -19,10 +20,6 @@ function Assets() {
   const [publishingId, setPublishingId] = useState(null)
   const [formData, setFormData] = useState({ name: '', description: '', assetType: 'Agent' })
 
-  const authHeaders = () => {
-    const token = localStorage.getItem('token')
-    return token ? { Authorization: 'Bearer ' + token } : {}
-  }
 
   useEffect(() => {
     fetchAssets()

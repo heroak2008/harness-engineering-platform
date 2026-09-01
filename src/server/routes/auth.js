@@ -2,9 +2,20 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import rateLimit from 'express-rate-limit';
 import { getJwtSecret } from '../utils/jwt.js';
 
 const router = express.Router();
+
+// Basic rate limiting for authentication endpoints to mitigate brute-force
+// credential guessing and abusive polling of the current-user endpoint.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' }
+});
 
 // User schema (simplified for this example)
 const userSchema = new mongoose.Schema({
@@ -18,7 +29,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -53,7 +64,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -100,7 +111,7 @@ export const verifyToken = (req, res, next) => {
 };
 
 // Get current user
-router.get('/me', verifyToken, async (req, res) => {
+router.get('/me', authLimiter, verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select('-password');
     res.json(user);
