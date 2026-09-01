@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import { getJwtSecret } from '../utils/jwt.js';
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.post('/register', async (req, res) => {
 
     const token = jwt.sign(
       { userId: user._id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'secret-key',
+      getJwtSecret(),
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
@@ -68,7 +69,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { userId: user._id, username: user.username, role: user.role },
-      process.env.JWT_SECRET || 'secret-key',
+      getJwtSecret(),
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
@@ -90,7 +91,7 @@ export const verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key');
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded;
     next();
   } catch (error) {

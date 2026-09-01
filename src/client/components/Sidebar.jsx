@@ -7,17 +7,17 @@ function Sidebar({ user, onLogout }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const menuItems = [
-    { name: 'Dashboard', path: '/', icon: '📊' },
-    { name: 'Workflows', path: '/workflows', icon: '⚙️' },
-    { name: 'Assets', path: '/assets', icon: '📦' },
-    { name: 'Specs', path: '/specs', icon: '📋' },
-    { name: 'Testing', path: '/testing', icon: '✅' },
+    { name: '工程总览', path: '/', icon: '📊' },
+    { name: 'Harness 工作流', path: '/workflows', icon: '⚙️' },
+    { name: 'AI 资产市场', path: '/assets', icon: '📦' },
+    { name: 'SPEC 工程', path: '/specs', icon: '📋' },
+    { name: '评测/质量工程', path: '/testing', icon: '✅' },
   ]
 
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        <h1 className="logo">🚀 Harness Platform</h1>
+        <h1 className="logo">🚀 Harness 工程平台</h1>
         <button
           className="toggle-btn"
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -48,7 +48,7 @@ function Sidebar({ user, onLogout }) {
           </div>
         )}
         <button className="btn btn-secondary" onClick={onLogout}>
-          {isCollapsed ? '🚪' : 'Logout'}
+          {isCollapsed ? '🚪' : '退出登录'}
         </button>
       </div>
     </aside>

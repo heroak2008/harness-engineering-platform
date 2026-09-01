@@ -9,7 +9,9 @@
     "dev:client": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node src/server/index.js"
+    "start": "node src/server/index.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test"
   },
   "dependencies": {
     "express": "^4.18.2",
