@@ -16,6 +16,7 @@ import Workflow from '../src/server/models/Workflow.js';
 import Asset from '../src/server/models/Asset.js';
 import Spec from '../src/server/models/Spec.js';
 import TestingCase from '../src/server/models/TestingCase.js';
+import Scenario from '../src/server/models/Scenario.js';
 
 dotenv.config();
 
@@ -25,36 +26,83 @@ async function seed() {
   console.log(`Connecting to ${MONGODB_URI} ...`);
   await mongoose.connect(MONGODB_URI);
 
-  console.log('Deleting ALL existing documents from Workflow/Asset/Spec/TestingCase collections (not just prior seed data)...');
+  console.log('Deleting ALL existing documents from Scenario/Workflow/Asset/Spec/TestingCase collections (not just prior seed data)...');
   await Promise.all([
+    Scenario.deleteMany({}),
     Workflow.deleteMany({}),
     Asset.deleteMany({}),
     Spec.deleteMany({}),
     TestingCase.deleteMany({})
   ]);
 
+  console.log('Inserting sample business scenarios...');
+  const requirementScenario = await Scenario.create({
+    name: '需求开发',
+    code: 'REQ-DEV',
+    description: '从业务需求分析到研发交付的一级场景',
+    status: 'active'
+  });
+  const codecScenario = await Scenario.create({
+    name: '编解码开发',
+    code: 'CODEC-DEV',
+    description: '设计并实现协议编解码能力',
+    parentId: requirementScenario._id,
+    level: 2,
+    status: 'active'
+  });
+  const reviewScenario = await Scenario.create({
+    name: '代码评审',
+    code: 'CODE-REVIEW',
+    description: '对研发交付物进行自动化代码评审',
+    parentId: requirementScenario._id,
+    level: 2,
+    status: 'active'
+  });
+
   console.log('Inserting sample workflows...');
   await Workflow.create([
     {
-      name: '客户工单自动分类与派单',
-      description: '基于业务场景理解客户工单内容，自动分类并派发给合适的处理团队',
-      businessScenario: '客服工单处理',
+      name: '编解码开发作业流程',
+      description: '理解协议定义，设计编解码方案，生成实现并验证兼容性',
+      businessScenario: '编解码开发',
+      scenarioId: codecScenario._id,
       status: 'active',
       stages: [
-        { id: 'stage-1', name: '场景理解', type: 'understanding', description: '解析工单内容与用户诉求' },
-        { id: 'stage-2', name: '方案设计', type: 'design', description: '设计分类规则与派单策略' },
-        { id: 'stage-3', name: '任务执行', type: 'execution', description: '调用分类 Agent 与派单 Skill' },
-        { id: 'stage-4', name: '结果验证', type: 'verification', description: '校验派单准确率' }
+        {
+          id: 'stage-1', order: 0, name: '协议理解', type: '场景理解', description: '解析协议、字段及兼容性约束',
+          steps: [
+            { id: 'step-1-1', order: 0, name: '解析协议字段', description: '提取消息结构与字段定义', assets: [] },
+            { id: 'step-1-2', order: 1, name: '梳理兼容性约束', description: '识别版本与兼容性要求', assets: [] }
+          ]
+        },
+        {
+          id: 'stage-2', order: 1, name: '方案设计', type: '方案设计', description: '设计编码与解码实现方案',
+          steps: [
+            { id: 'step-2-1', order: 0, name: '生成编解码实现', description: '调用 Agent 与 Skill 生成实现', assets: [] }
+          ]
+        },
+        {
+          id: 'stage-3', order: 2, name: '兼容性验证', type: '结果验证', description: '验证编解码结果与协议兼容性',
+          steps: [
+            { id: 'step-3-1', order: 0, name: '运行兼容性用例', description: '执行协议兼容性验证', assets: [] }
+          ]
+        }
       ]
     },
     {
       name: 'PR 代码评审辅助流程',
       description: '结合 Command 入口触发代码评审 Agent，输出评审建议',
       businessScenario: '代码评审',
+      scenarioId: reviewScenario._id,
       status: 'draft',
       stages: [
-        { id: 'stage-1', name: 'Command 入口', type: 'command', description: '/review 命令触发' },
-        { id: 'stage-2', name: '任务执行', type: 'execution', description: '调用评审 Agent 分析 diff' }
+        {
+          id: 'stage-1', order: 0, name: '评审执行', type: '任务执行', description: '/review 命令触发后执行评审',
+          steps: [
+            { id: 'step-1-1', order: 0, name: '分析 PR diff', description: '调用评审 Agent 分析 diff', assets: [] },
+            { id: 'step-1-2', order: 1, name: '汇总评审建议', description: '整理并输出评审报告', assets: [] }
+          ]
+        }
       ]
     }
   ]);

@@ -12,6 +12,7 @@ import assetRoutes from './routes/asset.js';
 import specRoutes from './routes/spec.js';
 import testingRoutes from './routes/testing.js';
 import dashboardRoutes from './routes/dashboard.js';
+import scenarioRoutes from './routes/scenario.js';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/asset', assetRoutes);
 app.use('/api/spec', specRoutes);
 app.use('/api/testing', testingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/scenario', scenarioRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

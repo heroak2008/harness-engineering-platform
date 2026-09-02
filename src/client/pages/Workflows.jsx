@@ -1,26 +1,16 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 import './Workflows.css'
 import { authHeaders } from '../utils/auth'
-
-const STAGE_LABELS = {
-  command: 'Command 入口',
-  understanding: '场景理解',
-  design: '方案设计',
-  execution: '任务执行',
-  verification: '结果验证',
-  extension: 'Extension 构建'
-}
+import { buildCommandPreview, findUnboundNodes } from '../utils/commandPreview'
 
 function Workflows() {
   const [workflows, setWorkflows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [formData, setFormData] = useState({ name: '', description: '', businessScenario: '' })
-  const [executingId, setExecutingId] = useState(null)
-  const [executionResults, setExecutionResults] = useState({})
-
+  const [preview, setPreview] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   useEffect(() => {
     fetchWorkflows()
@@ -40,30 +30,17 @@ function Workflows() {
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  // 平台只负责设计，不执行任何工作流：这里展示发布后各 Command 在 Claude Code TUI 中的调用形态
+  const handlePreview = async (workflowId) => {
+    setPreviewLoading(true)
     try {
-      await axios.post('/api/workflow', formData, { headers: authHeaders() })
-      setShowModal(false)
-      setFormData({ name: '', description: '', businessScenario: '' })
-      fetchWorkflows()
+      const response = await axios.get(`/api/workflow/${workflowId}`, { headers: authHeaders() })
+      setPreview(response.data)
     } catch (err) {
-      console.error('Failed to create workflow:', err)
-      alert(err.response?.data?.error || '创建工作流失败')
-    }
-  }
-
-  const handleExecute = async (workflowId) => {
-    setExecutingId(workflowId)
-    try {
-      const response = await axios.post(`/api/workflow/${workflowId}/execute`, {}, { headers: authHeaders() })
-      setExecutionResults((prev) => ({ ...prev, [workflowId]: response.data }))
-      fetchWorkflows()
-    } catch (err) {
-      console.error('Failed to execute workflow:', err)
-      alert(err.response?.data?.error || '执行工作流失败')
+      console.error('Failed to load workflow preview:', err)
+      alert(err.response?.data?.error || '加载预览失败')
     } finally {
-      setExecutingId(null)
+      setPreviewLoading(false)
     }
   }
 
@@ -74,10 +51,13 @@ function Workflows() {
   return (
     <div className="workflows-container">
       <div className="header">
-        <h1>Harness 工作流</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          + 新建工作流
-        </button>
+        <div>
+          <h1>Harness 工作流</h1>
+          <p className="page-description">集中查看各业务场景的 Workflow；流程设计请从业务场景进入。</p>
+        </div>
+        <Link className="btn btn-primary workflow-entry-link" to="/">
+          前往场景设计
+        </Link>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
@@ -87,7 +67,7 @@ function Workflows() {
           <div className="empty-state">
             <div className="empty-icon">⚙️</div>
             <div className="empty-title">暂无工作流</div>
-            <div className="empty-hint">点击右上角“新建工作流”，从业务场景出发编排场景理解 → 方案设计 → 任务执行 → 结果验证 → Extension 构建</div>
+            <div className="empty-hint">点击右上角“前往场景设计”，在场景设计台中按向导完成 Workflow 规划 → Command 入口 → Skill / Agent 集成</div>
           </div>
         ) : (
           <table className="table">
@@ -95,83 +75,69 @@ function Workflows() {
               <tr>
                 <th>名称</th>
                 <th>状态</th>
-                <th>业务场景</th>
-                <th>最近执行结果</th>
+                <th>所属业务场景</th>
+                <th>Command 入口</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {workflows.map(workflow => {
-                const lastResult = executionResults[workflow._id]
-                return (
-                  <tr key={workflow._id}>
-                    <td>{workflow.name}</td>
-                    <td><span className="badge badge-info">{workflow.status}</span></td>
-                    <td>{workflow.businessScenario || '-'}</td>
-                    <td>
-                      {lastResult
-                        ? `${lastResult.status}（执行ID: ${lastResult.executionId.slice(0, 8)}...）`
-                        : '-'}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => handleExecute(workflow._id)}
-                        disabled={executingId === workflow._id}
-                      >
-                        {executingId === workflow._id ? '执行中...' : '执行'}
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
+              {workflows.map(workflow => (
+                <tr key={workflow._id}>
+                  <td>{workflow.name}</td>
+                  <td><span className="badge badge-info">{workflow.status}</span></td>
+                  <td>{workflow.scenarioId?.name || workflow.businessScenario || '未关联场景'}</td>
+                  <td>{workflow.commands?.length || 0} 个</td>
+                  <td className="workflow-row-actions">
+                    <Link
+                      className="btn btn-secondary"
+                      to={workflow.scenarioId?._id ? `/?scenario=${workflow.scenarioId._id}` : '/'}
+                    >
+                      设计
+                    </Link>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handlePreview(workflow._id)}
+                      disabled={previewLoading}
+                    >
+                      预览 CLI 调用
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
       </div>
 
-      {showModal && (
-        <div className="modal" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>新建工作流</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">名称</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
+      {preview && (
+        <div className="modal" onClick={() => setPreview(null)}>
+          <div className="modal-content cli-preview-modal" onClick={event => event.stopPropagation()}>
+            <h2>CLI 调用预览：{preview.name}</h2>
+            <p className="cli-preview-hint">
+              该 Workflow 发布为 Extension 后，以下 Command 可在 Claude Code TUI 中直接输入触发。
+            </p>
+            {findUnboundNodes(preview).length > 0 && (
+              <div className="cli-preview-warning">
+                ⚠️ {findUnboundNodes(preview).length} 个节点尚未绑定 Agent / Skill（{findUnboundNodes(preview).map(gap => gap.label).join('、')}），正文未包含其资产信息。
               </div>
-              <div className="form-group">
-                <label className="form-label">描述</label>
-                <textarea
-                  className="form-input"
-                  rows="4"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">业务场景</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formData.businessScenario}
-                  onChange={(e) => setFormData({ ...formData, businessScenario: e.target.value })}
-                  placeholder="例如：客户工单自动分类与派单"
-                />
-              </div>
-              <p className="form-hint">
-                创建后可在阶段配置中补充 {Object.values(STAGE_LABELS).join(' / ')} 等阶段，并关联 Agent/Skill/MCP 资产。
-              </p>
-              <div className="modal-actions">
-                <button type="submit" className="btn btn-primary">创建</button>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>取消</button>
-              </div>
-            </form>
+            )}
+            {preview.commands?.length === 0 ? (
+              <div className="empty-hint">该 Workflow 尚未设计 Command 入口，请先在场景设计台第 3 步添加。</div>
+            ) : (
+              preview.commands.map(command => {
+                const item = buildCommandPreview(preview, command)
+                return (
+                  <div className="cli-preview-command" key={command.id}>
+                    <code className="cli-preview-invocation">{item.invocation}</code>
+                    {item.customized && <span className="badge badge-warning">正文已自定义</span>}
+                    <pre className="cli-preview-body">{item.markdown}</pre>
+                  </div>
+                )
+              })
+            )}
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setPreview(null)}>关闭</button>
+            </div>
           </div>
         </div>
       )}

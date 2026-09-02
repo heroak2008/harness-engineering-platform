@@ -73,7 +73,10 @@ function Assets() {
   return (
     <div className="assets-container">
       <div className="header">
-        <h1>AI 资产市场</h1>
+        <div>
+          <h1>Agent / Skill 资产</h1>
+          <p className="page-description">设计可复用的执行单元，并在业务场景的 Workflow 阶段中进行编排。</p>
+        </div>
         <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ 新建资产</button>
       </div>
 

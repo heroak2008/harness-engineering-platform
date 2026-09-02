@@ -5,6 +5,7 @@ import Asset from '../src/server/models/Asset.js';
 import Spec from '../src/server/models/Spec.js';
 import TestingCase from '../src/server/models/TestingCase.js';
 import Workflow from '../src/server/models/Workflow.js';
+import Scenario from '../src/server/models/Scenario.js';
 
 // These tests validate Mongoose schema rules (required fields, enums) using
 // `validateSync()`, which does not require a live MongoDB connection. This
@@ -83,5 +84,48 @@ describe('Workflow model', () => {
     const err = workflow.validateSync();
     assert.equal(err, undefined);
     assert.equal(workflow.status, 'draft');
+  });
+
+  test('requires a name for each workflow command', () => {
+    const workflow = new Workflow({
+      name: '示例工作流',
+      commands: [{ bodyOverride: '自定义正文' }]
+    });
+    const err = workflow.validateSync();
+    assert.ok(err);
+    assert.ok(err.errors['commands.0.name']);
+  });
+
+  test('accepts stages with custom scenario-defined type labels', () => {
+    // 回归防护：stages[].type 必须保持 { type: String } 写法，否则 Mongoose
+    // 会把整个 stage 子文档误判为 String 类型声明（Cast to string failed）
+    const workflow = new Workflow({
+      name: '示例工作流',
+      stages: [{
+        id: 's1', order: 0, name: '协议理解', type: '流程设计',
+        steps: [{ id: 'n1', order: 0, name: 'MML建模分析', assets: [] }]
+      }]
+    });
+    const err = workflow.validateSync();
+    assert.equal(err, undefined);
+    assert.equal(workflow.stages[0].type, '流程设计');
+    assert.equal(workflow.stages[0].steps[0].name, 'MML建模分析');
+  });
+});
+
+describe('Scenario model', () => {
+  test('rejects a scenario without a name', () => {
+    const scenario = new Scenario({});
+    const err = scenario.validateSync();
+    assert.ok(err);
+    assert.ok(err.errors.name);
+  });
+
+  test('accepts a hierarchical scenario and defaults status to draft', () => {
+    const scenario = new Scenario({ name: '编解码开发', level: 2 });
+    const err = scenario.validateSync();
+    assert.equal(err, undefined);
+    assert.equal(scenario.level, 2);
+    assert.equal(scenario.status, 'draft');
   });
 });

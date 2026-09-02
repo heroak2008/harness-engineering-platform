@@ -76,6 +76,11 @@ function Dashboard() {
       {stats && (
         <div className="stats-grid">
           <div className="stat-card">
+            <h3>业务场景</h3>
+            <p className="stat-value">{stats.total.scenarios || 0}</p>
+            <p className="stat-sub">分层场景设计入口</p>
+          </div>
+          <div className="stat-card">
             <h3>工作流</h3>
             <p className="stat-value">{stats.total.workflows}</p>
             <p className="stat-sub">其中 {stats.published.workflows} 个已启用</p>

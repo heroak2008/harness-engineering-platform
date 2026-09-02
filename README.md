@@ -1,8 +1,8 @@
 # Harness Engineering Platform（Harness 工程平台）
 
 一个可本地启动的全栈工程平台 MVP：后端使用 Express + Mongoose，前端使用 Vite + React。
-控制台围绕用户蓝图中的四个工程域组织：**SPEC 工程**、**Harness Workflow（工作流）**、
-**评测/质量工程**、**AI 资产市场**。
+控制台以分层的**业务场景**为设计入口，再逐层关联 **Harness Workflow（工作流）**、
+作业阶段和阶段内部的 **Agent / Skill**；SPEC、评测和资产能力作为这条主链路的工程支撑。
 
 > 本仓库是一个 MVP（最小可行产品），用于打通前后端并验证四个工程域的核心交互路径，
 > 尚未包含完整的鉴权、权限、审计等生产级能力。请务必阅读下方「鉴权范围与安全说明」。
@@ -10,7 +10,7 @@
 ## 目录
 
 - [架构说明](#架构说明)
-- [四个工程域与代码的对应关系](#四个工程域与代码的对应关系)
+- [设计主链路与代码的对应关系](#设计主链路与代码的对应关系)
 - [鉴权范围与安全说明（重要）](#鉴权范围与安全说明重要)
 - [前置条件](#前置条件)
 - [环境变量配置](#环境变量配置-env)
@@ -30,11 +30,11 @@ harness-engineering-platform/
 │   │   ├── main.jsx           # React 应用入口
 │   │   ├── App.jsx            # 路由与登录态管理
 │   │   ├── components/        # 侧边栏等公共组件
-│   │   └── pages/              # 五个核心页面：总览/工作流/资产市场/SPEC/评测
+│   │   └── pages/              # 场景设计台及工作流/资产/SPEC/评测/总览页面
 │   └── server/                 # 后端 Express 应用
 │       ├── index.js           # Express 启动入口，挂载路由、连接 MongoDB
-│       ├── models/             # Mongoose 数据模型：Asset / Spec / TestingCase / Workflow
-│       ├── routes/             # REST API：auth / workflow / asset / spec / testing / dashboard
+│       ├── models/             # Mongoose 数据模型：Scenario / Workflow / Asset / Spec / TestingCase
+│       ├── routes/             # REST API：auth / scenario / workflow / asset / spec / testing / dashboard
 │       └── utils/jwt.js       # JWT 密钥获取逻辑（开发态 fallback / 生产态强制配置）
 ├── scripts/seed.js            # 开发环境示例数据脚本（需手动执行，不会自动运行）
 └── tests/                      # 基于 Node 内置测试运行器的模型/工具函数测试
@@ -43,24 +43,25 @@ harness-engineering-platform/
 前端通过 `axios` 调用 `/api/*` 接口；开发模式下 Vite dev server（默认 `3000` 端口）会将
 `/api` 请求代理到 Express 后端（默认 `5000` 端口），因此本地开发无需额外配置跨域。
 
-## 四个工程域与代码的对应关系
+## 设计主链路与代码的对应关系
 
 | 工程域 | 后端 | 前端页面 | 说明 |
 | --- | --- | --- | --- |
+| **业务场景设计** | `models/Scenario.js`、`routes/scenario.js` | `pages/Scenarios.jsx`（路由 `/`） | 支持一级、二级及更深层级的场景树；从场景关联 Workflow，并继续配置阶段与 Agent / Skill |
 | **SPEC 工程** | `models/Spec.js`、`routes/spec.js` | `pages/Specs.jsx`（路由 `/specs`） | 管理需求(requirement)、设计(design)、任务(task)、契约(contract)、规则(rule)、标准(standard) 六类 SPEC，支持列出与创建 |
-| **Harness Workflow** | `models/Workflow.js`、`routes/workflow.js` | `pages/Workflows.jsx`（路由 `/workflows`） | 工作流按阶段（Command 入口 / 场景理解 / 方案设计 / 任务执行 / 结果验证 / Extension 构建）建模；支持列出、创建、调用 `POST /api/workflow/:id/execute` 执行 |
+| **Harness Workflow** | `models/Workflow.js`、`routes/workflow.js` | `pages/Scenarios.jsx`、`pages/Workflows.jsx` | 每个业务场景对应一个 Workflow（发布后为一个 Extension）；流程内按「环节（逻辑分组）→ 节点（原子执行单元）」两层编排，节点绑定 Agent / Skill；支持场景自定义环节类型、设计 Command 入口（/xxx 斜杠命令契约）并预览 CLI 调用形态 |
 | **评测/质量工程** | `models/TestingCase.js`、`routes/testing.js` | `pages/Testing.jsx`（路由 `/testing`） | 测试集（评测集）包含用例与质量门禁（qualityGates），支持列出并调用 `POST /api/testing/:id/execute` 执行，展示执行结果与质量分 |
 | **AI 资产市场** | `models/Asset.js`、`routes/asset.js` | `pages/Assets.jsx`（路由 `/assets`） | 管理 Agent / Skill / MCP / Extension 四类资产，支持按类型过滤、创建、调用 `POST /api/asset/:id/publish` 发布，展示评分/下载量 |
-| **总览（Dashboard）** | `routes/dashboard.js` | `pages/Dashboard.jsx`（路由 `/`） | 聚合以上四域的数量统计与近期活动，展示示例趋势图（基于当前统计数字生成，非真实历史时序） |
+| **总览（Dashboard）** | `routes/dashboard.js` | `pages/Dashboard.jsx`（路由 `/dashboard`） | 聚合业务场景及各工程域的数量统计与近期活动 |
 
 ## 鉴权范围与安全说明（重要）
 
 - `routes/auth.js` 提供 `POST /api/auth/register`、`POST /api/auth/login`、`GET /api/auth/me`（受 `verifyToken` 中间件保护），使用 JWT 签发与校验 token；三个接口均挂载了基础的速率限制（`express-rate-limit`，默认 15 分钟内最多 20 次请求）以缓解暴力破解/撞库风险。
-- **`workflow` / `asset` / `spec` / `testing` / `dashboard` 五个资源路由目前均未挂载 `verifyToken` 中间件**，也就是说：
+- **`scenario` / `workflow` / `asset` / `spec` / `testing` / `dashboard` 六个资源路由目前均未挂载 `verifyToken` 中间件**，也就是说：
   - 前端会在请求头带上登录后获得的 token，但后端当前并未校验该 token 是否有效才允许访问这些资源接口。
   - 任何能访问到后端服务的客户端都可以直接读写工作流、资产、SPEC、测试集数据，无需登录。
 - 这是 MVP 阶段的已知设计缺口，**不代表已实现基于角色的访问控制（RBAC）或数据隔离**。在将本项目用于生产环境或对外暴露之前，必须：
-  1. 在 `workflow` / `asset` / `spec` / `testing` / `dashboard` 路由上挂载 `verifyToken`（或等效）中间件；
+  1. 在 `scenario` / `workflow` / `asset` / `spec` / `testing` / `dashboard` 路由上挂载 `verifyToken`（或等效）中间件；
   2. 补充基于 `role`（`admin` / `developer` / `reviewer` / `viewer`）的细粒度权限控制；
   3. 补充审计日志、速率限制等安全加固措施。
 - JWT 密钥：`src/server/utils/jwt.js` 不再包含可用于生产的硬编码默认密钥。
@@ -152,7 +153,7 @@ npm test        # 运行 Node 内置测试运行器（node --test），覆盖模
 
 - 资源路由（工作流/资产/SPEC/评测/总览）未挂载鉴权中间件，详见上文「鉴权范围与安全说明」。
 - 未实现基于角色的权限控制、审计日志。
-- 工作流的“执行”、测试集的“执行”均为演示性质的模拟执行（例如测试执行结果通过随机数生成通过/失败），并未真正调度 Agent/Skill/MCP 或运行真实用例。
+- 平台只承载设计态：Workflow 不执行真实作业，工作流列表页的“预览 CLI 调用”展示发布为 Claude Code Extension 后各 Command 的调用形态与编译正文；真实发布/导出能力尚未实现。测试集的“执行”为演示性质的模拟执行（结果通过随机数生成通过/失败）。
 - 总览页的“资产/交付趋势”图表基于当前统计数字线性生成的示意数据，后端暂未提供真实的历史时间序列接口。
 - 资产市场暂未实现文件/代码包上传（`multer`、`UPLOAD_DIR` 为预留能力）。
 - `CLAUDE_API_KEY` / `OPENAI_API_KEY` 为预留配置项，当前代码未实际调用任何外部 AI 服务。

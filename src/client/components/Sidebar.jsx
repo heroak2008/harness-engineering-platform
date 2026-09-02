@@ -7,11 +7,12 @@ function Sidebar({ user, onLogout }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const menuItems = [
-    { name: '工程总览', path: '/', icon: '📊' },
+    { name: '业务场景设计', path: '/', icon: '🧭' },
     { name: 'Harness 工作流', path: '/workflows', icon: '⚙️' },
-    { name: 'AI 资产市场', path: '/assets', icon: '📦' },
+    { name: 'Agent / Skill 资产', path: '/assets', icon: '🧩' },
     { name: 'SPEC 工程', path: '/specs', icon: '📋' },
     { name: '评测/质量工程', path: '/testing', icon: '✅' },
+    { name: '工程总览', path: '/dashboard', icon: '📊' },
   ]
 
   return (

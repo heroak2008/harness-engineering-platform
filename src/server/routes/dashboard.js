@@ -3,6 +3,7 @@ import Workflow from '../models/Workflow.js';
 import Asset from '../models/Asset.js';
 import Spec from '../models/Spec.js';
 import TestingCase from '../models/TestingCase.js';
+import Scenario from '../models/Scenario.js';
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ router.get('/stats', async (req, res) => {
     const assets = await Asset.countDocuments();
     const specs = await Spec.countDocuments();
     const testCases = await TestingCase.countDocuments();
+    const scenarios = await Scenario.countDocuments();
 
     const publishedAssets = await Asset.countDocuments({ status: 'published' });
     const approvedSpecs = await Spec.countDocuments({ status: 'approved' });
@@ -21,6 +23,7 @@ router.get('/stats', async (req, res) => {
     res.json({
       total: {
         workflows,
+        scenarios,
         assets,
         specs,
         testCases

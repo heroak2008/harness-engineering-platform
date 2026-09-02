@@ -7,6 +7,7 @@ import Assets from './pages/Assets'
 import Specs from './pages/Specs'
 import Testing from './pages/Testing'
 import Login from './pages/Login'
+import Scenarios from './pages/Scenarios'
 import './App.css'
 
 function App() {
@@ -41,7 +42,8 @@ function App() {
         <Sidebar user={user} onLogout={handleLogout} />
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Scenarios />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/workflows" element={<Workflows />} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/specs" element={<Specs />} />
